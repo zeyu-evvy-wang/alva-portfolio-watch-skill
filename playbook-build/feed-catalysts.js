@@ -257,10 +257,10 @@ function fmtPct(x) {
     // page uses CSS white-space:pre-line, so single newlines already break.
     const sections = [
       action,
-      "**Book** " + fmtPct(overview.day_return) + " vs " + overview.benchmark + " " + fmtPct(overview.benchmark_return) + " · led by " + overview.biggest_mover + " " + fmtPct(overview.biggest_move),
-      "**Signals** " + (daySignals.length ? signalLines : "none new"),
-      "**Watch** " + (futureCat.length ? futureCat.map((c) => c.ticker + " " + shortDate(c.event_date)).join(" · ") : "no confirmed dates"),
-      insight ? "**Note** " + insight : "",
+      "• **Book** " + fmtPct(overview.day_return) + " vs " + overview.benchmark + " " + fmtPct(overview.benchmark_return) + " · led by " + overview.biggest_mover + " " + fmtPct(overview.biggest_move),
+      "• **Signals** " + (daySignals.length ? signalLines : "none new"),
+      "• **Watch** " + (futureCat.length ? futureCat.map((c) => c.ticker + " " + shortDate(c.event_date)).join(" · ") : "no confirmed dates"),
+      insight ? "• **Note** " + insight : "",
     ].filter(Boolean);
     const pageBody = sections.join("\n");                       // pre-line: tight
     const pushBody = sections.join("\n\n") +                     // Markdown: real breaks
