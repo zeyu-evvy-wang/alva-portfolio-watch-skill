@@ -16,6 +16,11 @@ so a critical push means something.
 
 ![Tech-Core Portfolio Watch — the interface this skill generates: an Action Board that says what to do, KPI pulse, watch-vs-SPY curve, a daily brief, and a severity-ranked signal feed](docs/playbook.png)
 
+**Alerts reach the phone.** The end-of-day brief pushes to Telegram, leads
+with what to do, and deep-links back to the interface:
+
+<img src="docs/telegram-alert.png" alt="Daily Brief delivered to Telegram — verdict line, bulleted Book/Signals/Watch/Note, and an Open Portfolio Watch deep link" width="420" />
+
 ## Why this design
 
 - **The page opens with an Action Board, not a chart.** Red/amber/green
@@ -49,8 +54,8 @@ Full reasoning: [ONE-PAGER.md](ONE-PAGER.md)（中文）.
 ## Structure
 
 ```
-├── ONE-PAGER.md                    # 交付物 3：一页纸思路（中文）
-├── portfolio-watch/                # 交付物 1：the Skill
+├── ONE-PAGER.md                    # the thinking behind the design (Chinese)
+├── portfolio-watch/                # the Skill — load this into Alva
 │   ├── SKILL.md                    #   entry point — methodology + build directives
 │   ├── references/
 │   │   ├── signal-taxonomy.md      #   dimensions, adaptive thresholds, severity model
@@ -59,7 +64,7 @@ Full reasoning: [ONE-PAGER.md](ONE-PAGER.md)（中文）.
 │   │   └── build-plan.md           #   feed architecture, build order, acceptance gates
 │   └── scripts/
 │       └── signal-engine.js        #   pure-JS reference implementation (jagent-safe)
-└── playbook-build/                 # 交付物 2 的构建产物 — what the skill actually built
+└── playbook-build/                 # what the skill produced — the live playbook's source
     ├── feed-signals.js             #   fast lane: signal engine feed (live on Alva)
     ├── feed-catalysts.js           #   slow lane: calendar + KOL echo + Daily Brief
     ├── calibrate.js                #   60-session calibration backfill
