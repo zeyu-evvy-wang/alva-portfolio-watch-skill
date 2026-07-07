@@ -14,6 +14,8 @@ so a critical push means something.
 > catalysts + Daily Brief push after close), calibrated on the portfolio's
 > trailing 60 sessions.
 
+![Tech-Core Portfolio Watch — the interface this skill generates: an Action Board that says what to do, KPI pulse, watch-vs-SPY curve, a daily brief, and a severity-ranked signal feed](docs/playbook.png)
+
 ## Why this design
 
 - **The page opens with an Action Board, not a chart.** Red/amber/green

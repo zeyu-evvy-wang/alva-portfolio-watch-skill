@@ -252,19 +252,23 @@ function fmtPct(x) {
     const signalLines = daySignals.length
       ? daySignals.slice(0, 4).map((s) => "• " + s.title).join("\n")
       : "none new";
-    const body = [
+    // Sections shared by page and push. The push joins them with blank lines
+    // because Markdown/Telegram collapses a single newline into a space; the
+    // page uses CSS white-space:pre-line, so single newlines already break.
+    const sections = [
       action,
-      "",
       "**Book** " + fmtPct(overview.day_return) + " vs " + overview.benchmark + " " + fmtPct(overview.benchmark_return) + " · led by " + overview.biggest_mover + " " + fmtPct(overview.biggest_move),
-      "**Signals** " + (daySignals.length ? "" : "none new") + (daySignals.length ? "\n" + signalLines : ""),
+      "**Signals** " + (daySignals.length ? signalLines : "none new"),
       "**Watch** " + (futureCat.length ? futureCat.map((c) => c.ticker + " " + shortDate(c.event_date)).join(" · ") : "no confirmed dates"),
       insight ? "**Note** " + insight : "",
-      "[Open Portfolio Watch](" + CONFIG.shareUrl + ")",
-    ].filter(Boolean).join("\n");
+    ].filter(Boolean);
+    const pageBody = sections.join("\n");                       // pre-line: tight
+    const pushBody = sections.join("\n\n") +                     // Markdown: real breaks
+      "\n\n[Open Portfolio Watch](" + CONFIG.shareUrl + ")";
 
     // digest/daily dedups by snapDate (one record per day, updated on re-runs),
     // so the page always shows the freshest brief without duplicating rows.
-    await ctx.self.ts("digest", "daily").append([{ date: snapDate, brief: body.replace("\n[Open Portfolio Watch](" + CONFIG.shareUrl + ")", ""), facts_json: JSON.stringify(facts) }]);
+    await ctx.self.ts("digest", "daily").append([{ date: snapDate, brief: pageBody, facts_json: JSON.stringify(facts) }]);
     // Push once per day: the first run of the day sends the brief; later runs
     // (manual triggers, cron retries) refresh the page silently via the skip
     // sentinel so subscribers never get duplicate same-day notifications.
@@ -272,7 +276,7 @@ function fmtPct(x) {
     await ctx.self.ts("notify", "message").append([{
       date: nowMs,
       title: "📋 Portfolio Brief · " + todayIso,
-      body: alreadyBriefed ? "<|SKIP_NOTIFICATION|>" : body,
+      body: alreadyBriefed ? "<|SKIP_NOTIFICATION|>" : pushBody,
     }]);
     if (!alreadyBriefed) await ctx.kv.put("lastBriefDay", todayIso);
   });
