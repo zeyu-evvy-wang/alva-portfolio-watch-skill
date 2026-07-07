@@ -14,12 +14,13 @@ so a critical push means something.
 > catalysts + Daily Brief push after close), calibrated on the portfolio's
 > trailing 60 sessions.
 
-![Tech-Core Portfolio Watch — the interface this skill generates: an Action Board that says what to do, KPI pulse, watch-vs-SPY curve, a daily brief, and a severity-ranked signal feed](docs/playbook.png)
+![Tech-Core Portfolio Watch — the interface this skill generates: an Action Board that says what to do, KPI pulse, watch-vs-SPY curve, a daily brief, and a severity-ranked signal feed](telegram/playbook.png)
 
-**Alerts reach the phone.** The end-of-day brief pushes to Telegram, leads
-with what to do, and deep-links back to the interface:
+**Alerts reach the phone, and tapping one opens the matching content.** The
+end-of-day brief pushes to Telegram (left); tapping "Open Portfolio Watch"
+lands on the live playbook (right):
 
-<img src="docs/telegram-alert.png" alt="Daily Brief delivered to Telegram — verdict line, bulleted Book/Signals/Watch/Note, and an Open Portfolio Watch deep link" width="420" />
+<img src="telegram/telegram-alert.png" alt="Daily Brief delivered to Telegram — verdict line, bulleted Book/Signals/Watch/Note, and an Open Portfolio Watch deep link" width="360" /> <img src="telegram/telegram-link.png" alt="Tapping the alert opens the Tech-Core Portfolio Watch playbook on alva.ai" width="360" />
 
 ## Why this design
 
