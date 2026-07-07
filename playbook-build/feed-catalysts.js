@@ -262,11 +262,18 @@ function fmtPct(x) {
       "[Open Portfolio Watch](" + CONFIG.shareUrl + ")",
     ].filter(Boolean).join("\n");
 
+    // digest/daily dedups by snapDate (one record per day, updated on re-runs),
+    // so the page always shows the freshest brief without duplicating rows.
     await ctx.self.ts("digest", "daily").append([{ date: snapDate, brief: body.replace("\n[Open Portfolio Watch](" + CONFIG.shareUrl + ")", ""), facts_json: JSON.stringify(facts) }]);
+    // Push once per day: the first run of the day sends the brief; later runs
+    // (manual triggers, cron retries) refresh the page silently via the skip
+    // sentinel so subscribers never get duplicate same-day notifications.
+    const alreadyBriefed = (await ctx.kv.load("lastBriefDay")) === todayIso;
     await ctx.self.ts("notify", "message").append([{
       date: nowMs,
       title: "📋 Portfolio Brief · " + todayIso,
-      body: body,
+      body: alreadyBriefed ? "<|SKIP_NOTIFICATION|>" : body,
     }]);
+    if (!alreadyBriefed) await ctx.kv.put("lastBriefDay", todayIso);
   });
 })();

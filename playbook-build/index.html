@@ -218,6 +218,7 @@
   function pct(x, d) { d = d == null ? 1 : d; return (x >= 0 ? "+" : "−") + Math.abs(x * 100).toFixed(d) + "%"; }
   function cls(x) { return x >= 0 ? "pw-up" : "pw-down"; }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function inlineMd(s) { return esc(s).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>"); }
   function maxDate(rows) { return rows.reduce(function (m, r) { return Math.max(m, r.date || 0); }, 0); }
   function isoDay(ms) { return new Date(ms).toISOString().slice(0, 10); }
 
@@ -450,7 +451,10 @@
 
     // Brief
     if (brief) {
-      document.getElementById("pw-brief").textContent = brief.brief;
+      // Drop the verdict first line on the page: it duplicates the Action
+      // Board and its emoji may not render in every font. Keep it in the
+      // Telegram push (self-contained there).
+      document.getElementById("pw-brief").innerHTML = inlineMd(brief.brief.replace(/^\s*(\u2705|\uD83D\uDD34|\uD83D\uDFE1)[^\n]*\n+/, ""));
       document.getElementById("brief-date").textContent = isoDay(brief.date);
     } else {
       document.getElementById("pw-brief").textContent = "First brief arrives after the next market close.";
