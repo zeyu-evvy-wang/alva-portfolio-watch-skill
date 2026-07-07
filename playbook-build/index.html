@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tech-Core Portfolio Watch</title>
+<link rel="stylesheet" href="https://alva-ai-static.b-cdn.net/design-system/v1/design-system.css" />
+<script src="https://unpkg.com/@alva-ai/toolkit/dist/browser.global.js"></script>
+<script src="https://unpkg.com/echarts@5/dist/echarts.min.js"></script>
+<style>
+  html { height: 100%; overflow: hidden; }
+  body {
+    height: 100%; overflow-y: auto; overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  * { box-sizing: border-box; -ms-overflow-style: none; scrollbar-width: none; }
+  *::-webkit-scrollbar { display: none; }
+  .playbook-container { width: 100%; margin: 0 auto; padding: var(--spacing-s) var(--spacing-xxl) var(--spacing-xxxxl); }
+  @media (max-width: 768px) { .playbook-container { padding: var(--spacing-m); } }
+
+  /* Action Board */
+  .pw-board { border-radius: var(--radius-ct-s); padding: var(--spacing-l) var(--spacing-xl); margin-bottom: var(--spacing-xs); border-left: 4px solid var(--line-l2); background: var(--grey-g01); }
+  .pw-board.pw-red { border-left-color: var(--main-m4); background: rgba(214,69,69,0.05); }
+  .pw-board.pw-amber { border-left-color: #E8A317; background: rgba(240,165,0,0.06); }
+  .pw-board.pw-green { border-left-color: var(--main-m3); background: rgba(46,164,79,0.05); }
+  .pw-board-head { font-size: 20px; font-weight: 400; color: var(--text-n9); display: flex; align-items: center; gap: var(--spacing-xs); }
+  .pw-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; flex: none; }
+  .pw-red .pw-dot { background: var(--main-m4); }
+  .pw-amber .pw-dot { background: #E8A317; }
+  .pw-green .pw-dot { background: var(--main-m3); }
+  .pw-board-sub { font-size: 12px; color: var(--text-n5); margin-top: 2px; }
+  .pw-board-items { margin-top: var(--spacing-m); display: flex; flex-direction: column; gap: var(--spacing-xs); }
+  .pw-board-item { display: flex; align-items: baseline; gap: var(--spacing-xs); font-size: 14px; color: var(--text-n9); cursor: pointer; }
+  .pw-board-item:hover .pw-bi-text { text-decoration: underline; }
+  .pw-bi-verb { font-weight: 500; white-space: nowrap; }
+  .pw-bi-arrow { color: var(--text-n5); font-size: 12px; }
+
+  /* KPI strip */
+  .pw-kpi { background: var(--grey-g01); border-radius: var(--radius-ct-s); padding: var(--spacing-m) var(--spacing-l); min-height: 104px; display: flex; flex-direction: column; justify-content: center; gap: 3px; }
+  .pw-kpi-value { font-size: 22px; font-weight: 400; color: var(--text-n9); line-height: 1.25; }
+  .pw-kpi-label { font-size: 11px; color: var(--text-n5); text-transform: uppercase; letter-spacing: 0.05em; }
+  .pw-kpi-sub { font-size: 12px; color: var(--text-n7); }
+  .pw-up { color: var(--main-m3); }
+  .pw-down { color: var(--main-m4); }
+
+  /* Signals */
+  .pw-signal { background: var(--grey-g01); border-left: 3px solid var(--line-l2); border-radius: var(--radius-ct-min); padding: var(--spacing-s) var(--spacing-m); margin-bottom: var(--spacing-xs); }
+  .pw-signal.pw-b-p0 { border-left-color: var(--main-m4); }
+  .pw-signal.pw-b-p1 { border-left-color: #E8A317; }
+  .pw-signal.pw-highlight { outline: 1.5px solid var(--main-m1); }
+  .pw-signal-title { font-size: 14px; font-weight: 500; color: var(--text-n9); }
+  .pw-signal-why { font-size: 13px; color: var(--text-n7); margin-top: 3px; }
+  .pw-signal-meta { font-size: 11px; color: var(--text-n5); margin-top: 4px; }
+  .pw-empty { color: var(--text-n7); font-size: 13px; padding: var(--spacing-s) 0; }
+  .pw-brief { font-size: 14px; color: var(--text-n9); line-height: 1.65; white-space: pre-line; }
+  .pw-note { font-size: 12px; color: var(--text-n5); line-height: 1.7; }
+  .pw-note table { border-collapse: collapse; margin: var(--spacing-xs) 0; }
+  .pw-note td, .pw-note th { padding: 2px 14px 2px 0; text-align: left; font-weight: 400; }
+  .pw-note th { color: var(--text-n7); }
+  .pw-filter { display: flex; gap: var(--spacing-xs); margin-bottom: var(--spacing-m); flex-wrap: wrap; }
+  .pw-filter .tag { cursor: pointer; }
+  .pw-filter .tag.pw-on { outline: 1px solid var(--line-l9); }
+  .pw-ctx-toggle { font-size: 13px; color: var(--text-n7); cursor: pointer; padding: var(--spacing-s) 0; user-select: none; }
+  .pw-ctx-toggle:hover { color: var(--text-n9); }
+  .pw-ctx-row { font-size: 13px; color: var(--text-n7); padding: 6px var(--spacing-s); border-left: 2px solid var(--line-l12); margin-bottom: 4px; cursor: pointer; }
+  .pw-ctx-row .pw-ctx-detail { display: none; color: var(--text-n5); font-size: 12px; margin-top: 3px; }
+  .pw-ctx-row.pw-open .pw-ctx-detail { display: block; }
+  .pw-ctx-row.pw-highlight { outline: 1.5px solid var(--main-m1); }
+  #pw-chart { height: 380px; width: 100%; }
+  .pw-table { border-collapse: collapse; width: 100%; }
+  .pw-table th { font-size: 11px; color: var(--text-n5); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 400; text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line-l12); white-space: nowrap; }
+  .pw-table td { font-size: 13px; color: var(--text-n9); padding: 9px 10px; border-bottom: 0.5px solid var(--line-l07); white-space: nowrap; }
+  .pw-table tbody tr:last-child td { border-bottom: none; }
+  .pw-table tbody tr:hover td { background: var(--grey-g01); }
+  .pw-table th.num, .pw-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .pw-table td.pw-tk { font-weight: 500; }
+  .pw-tabwrap { width: 100%; overflow-x: auto; margin-top: var(--spacing-m); }
+  .pw-cta { background: var(--grey-g01); border-radius: var(--radius-ct-s); padding: var(--spacing-l) var(--spacing-xl); }
+  .pw-cta-title { font-size: 15px; font-weight: 500; color: var(--text-n9); }
+  .pw-cta-text { font-size: 13px; color: var(--text-n7); margin-top: var(--spacing-xxs); line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="playbook-container">
+  <!-- Row 0 · Action Board -->
+  <div class="widget-grid">
+    <div class="col-8">
+      <div class="pw-board" id="pw-board">
+        <div class="pw-board-head" id="pw-board-head">Loading…</div>
+        <div class="pw-board-sub" id="pw-board-sub"></div>
+        <div class="pw-board-items" id="pw-board-items"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 1 · Pulse -->
+  <div class="widget-grid">
+    <div class="col-2"><div class="pw-kpi">
+      <div class="pw-kpi-label" id="kpi-day-label">Last session</div>
+      <div class="pw-kpi-value" id="kpi-day">—</div>
+      <div class="pw-kpi-sub" id="kpi-day-sub"></div>
+    </div></div>
+    <div class="col-2"><div class="pw-kpi">
+      <div class="pw-kpi-label">Biggest mover</div>
+      <div class="pw-kpi-value" id="kpi-mover">—</div>
+      <div class="pw-kpi-sub" id="kpi-mover-sub"></div>
+    </div></div>
+    <div class="col-2"><div class="pw-kpi">
+      <div class="pw-kpi-label">Top P&L driver</div>
+      <div class="pw-kpi-value" id="kpi-contrib">—</div>
+      <div class="pw-kpi-sub" id="kpi-contrib-sub"></div>
+    </div></div>
+    <div class="col-2"><div class="pw-kpi">
+      <div class="pw-kpi-label">Next catalyst</div>
+      <div class="pw-kpi-value" id="kpi-catalyst" style="font-size:17px">—</div>
+      <div class="pw-kpi-sub" id="kpi-catalyst-sub"></div>
+    </div></div>
+  </div>
+
+  <!-- Row 2 · Chart -->
+  <div class="widget-grid">
+    <div class="widget-card col-8">
+      <div class="widget-title"><span class="widget-title-text">Watch vs SPY — 60 sessions, cumulative</span><span class="widget-timestamp" id="chart-asof"></span></div>
+      <div class="widget-body chart-dotted-background" style="position:relative">
+        <div id="pw-chart"></div>
+        <div class="alva-watermark">Alva</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 3 · Daily Brief -->
+  <div class="widget-grid">
+    <div class="widget-card col-8" id="pw-brief-card">
+      <div class="widget-title"><span class="widget-title-text">Daily Brief</span><span class="widget-timestamp" id="brief-date"></span></div>
+      <div class="widget-body free-text-body"><div class="pw-brief" id="pw-brief">Loading…</div></div>
+    </div>
+  </div>
+
+  <!-- Row 4 · Signals -->
+  <div class="widget-grid">
+    <div class="widget-card col-8" id="pw-signals-card">
+      <div class="widget-title"><span class="widget-title-text">Signals</span></div>
+      <div class="widget-body">
+        <div style="width:100%">
+          <div class="pw-filter" id="pw-filter"></div>
+          <div id="pw-signals"><div class="pw-empty">Loading…</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 5 · Holdings / Catalysts (tabbed) -->
+  <div class="widget-grid">
+    <div class="widget-card table-card col-8" id="pw-calendar-card">
+      <div class="widget-body">
+        <div style="width:100%">
+          <div class="tab tab-underline tab-s" id="pw-tabs">
+            <div class="tab-item active" data-text="Holdings" data-pane="holdings">Holdings</div>
+            <div class="tab-item" data-text="Upcoming catalysts" data-pane="catalysts">Upcoming catalysts</div>
+          </div>
+          <div class="pw-tabwrap" id="pw-pane-holdings">
+            <table id="pw-holdings" class="pw-table"><thead></thead><tbody></tbody></table>
+          </div>
+          <div class="pw-tabwrap" id="pw-pane-catalysts" style="display:none">
+            <table id="pw-calendar" class="pw-table"><thead></thead><tbody></tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Get your own watch -->
+  <div class="widget-grid">
+    <div class="col-8">
+      <div class="pw-cta">
+        <div class="pw-cta-title">This watch is a template output — get your own</div>
+        <div class="pw-cta-text">Everything on this page was generated from one sentence by the reusable
+          <a href="https://github.com/zeyu-evvy-wang/alva-portfolio-watch-skill" target="_blank" rel="noopener noreferrer">portfolio-watch skill</a>.
+          Name your tickers (position sizes optional) and it builds a watch calibrated to <i>your</i> book —
+          its own tripwires, its own alert budget, its own daily brief. This page watches an example portfolio;
+          yours should watch yours.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer · Methodology -->
+  <div class="widget-grid">
+    <div class="widget-card col-8">
+      <div class="widget-title"><span class="widget-title-text">What counts as big here</span></div>
+      <div class="widget-body free-text-body"><div class="pw-note" id="pw-method">Loading…</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var USER = "evvywang";
+  var FEED_S = "/alva/home/" + USER + "/feeds/pw-tech-core-signals/v1/data";
+  var FEED_C = "/alva/home/" + USER + "/feeds/pw-tech-core-catalysts/v1/data";
+
+  function createAlvaClientConfig() {
+    var params = new URLSearchParams(window.location.search);
+    var pbsvToken = window.alva && window.alva.udf && window.alva.udf.getViewerToken ? window.alva.udf.getViewerToken() : null;
+    var apiOrigin = params.get("api_origin");
+    var cfg = {};
+    if (pbsvToken) cfg.pbsvToken = pbsvToken;
+    if (apiOrigin) cfg.baseUrl = apiOrigin.replace(/\/$/, "");
+    return cfg;
+  }
+  function readAlfs(path) {
+    var client = new AlvaToolkit.AlvaClient(createAlvaClientConfig());
+    return client.fs.read({ path: path });
+  }
+  function toArr(x) { return Array.isArray(x) ? x : (x == null ? [] : [x]); }
+  function pct(x, d) { d = d == null ? 1 : d; return (x >= 0 ? "+" : "−") + Math.abs(x * 100).toFixed(d) + "%"; }
+  function cls(x) { return x >= 0 ? "pw-up" : "pw-down"; }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function maxDate(rows) { return rows.reduce(function (m, r) { return Math.max(m, r.date || 0); }, 0); }
+  function isoDay(ms) { return new Date(ms).toISOString().slice(0, 10); }
+
+  var BUCKET_RANK = { P0: 2, P1: 1, P2: 0 };
+  var state = { signals: [], filter: "ALL", tickers: [], contextOpen: false };
+
+  function switchTab(name) {
+    document.querySelectorAll("#pw-tabs .tab-item").forEach(function (t) {
+      t.classList.toggle("active", t.getAttribute("data-pane") === name);
+    });
+    document.getElementById("pw-pane-holdings").style.display = name === "holdings" ? "" : "none";
+    document.getElementById("pw-pane-catalysts").style.display = name === "catalysts" ? "" : "none";
+    var active = document.getElementById("pw-pane-" + name);
+    requestAnimationFrame(function () {
+      // Canonical tab-switch handler: containers hidden at init report 0x0,
+      // so charts/tables inside a newly shown panel need a resize pass.
+      active.querySelectorAll("[_echarts_instance_]").forEach(function (el) {
+        var inst = echarts.getInstanceByDom(el);
+        if (inst) inst.resize();
+      });
+      initTableAlignment(active.querySelector(".pw-table"));
+    });
+  }
+
+  function scrollToEl(id) {
+    if (id === "pw-calendar-card") switchTab("catalysts");
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.classList.add("pw-highlight");
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTimeout(function () { el.classList.remove("pw-highlight"); }, 2600);
+  }
+
+  function renderBoard(overview, calendar) {
+    var today = isoDay(Date.now());
+    var dayAgo = Date.now() - 24 * 3600000;
+    var p0new = state.signals.filter(function (s) { return s.bucket === "P0" && s.date >= dayAgo; });
+    var p1today = state.signals.filter(function (s) { return s.bucket === "P1" && isoDay(s.date) === today; });
+    var future = calendar.filter(function (c) { return c.event_date; }).map(function (c) {
+      return Object.assign({ days: Math.round((Date.parse(c.event_date) - Date.now()) / 86400000) }, c);
+    }).filter(function (c) { return c.days >= 0; }).sort(function (a, b) { return a.days - b.days; });
+
+    var board = document.getElementById("pw-board");
+    var head = document.getElementById("pw-board-head");
+    var sub = document.getElementById("pw-board-sub");
+    var items = [];
+
+    if (p0new.length) {
+      board.classList.add("pw-red");
+      head.innerHTML = '<span class="pw-dot"></span>Needs your attention';
+    } else if (p1today.length || (future.length && future[0].days <= 2)) {
+      board.classList.add("pw-amber");
+      head.innerHTML = '<span class="pw-dot"></span>Worth a look';
+    } else {
+      board.classList.add("pw-green");
+      head.innerHTML = '<span class="pw-dot"></span>All clear — nothing needs you';
+    }
+    sub.textContent = overview ? "Checked " + new Date(overview.as_of).toISOString().replace("T", " ").slice(0, 16) + " UTC · every 30 min in market hours · Brief after close" : "";
+
+    p0new.slice(0, 2).forEach(function (s) {
+      items.push({ verb: "Look now", text: s.title, target: "signal-" + s.id });
+    });
+    if (p1today.length && items.length < 3) {
+      var tk = p1today.map(function (s) { return s.ticker; }).filter(function (t, i, a) { return a.indexOf(t) === i; });
+      items.push({ verb: "Read tonight’s Brief", text: p1today.length + " notable signal" + (p1today.length > 1 ? "s" : "") + ": " + tk.join(", "), target: "pw-brief-card" });
+    }
+    if (!p0new.length && !p1today.length && items.length < 3) {
+      var recent = state.signals.filter(function (s) { return s.bucket !== "P2" && s.date >= Date.now() - 10 * 86400000; });
+      if (recent.length) {
+        var rtk = recent.map(function (s) { return s.ticker; }).filter(function (t, i, a) { return a.indexOf(t) === i; });
+        items.push({ verb: "Catch up", text: recent.length + " notable signal" + (recent.length > 1 ? "s" : "") + " in recent sessions: " + rtk.join(", "), target: "pw-signals-card" });
+      }
+    }
+    if (future.length && items.length < 3 && future[0].days <= 10) {
+      items.push({ verb: "Prepare", text: future[0].ticker + " " + future[0].event.toLowerCase() + " " + future[0].event_date + " (in " + future[0].days + "d, " + future[0].note + ")", target: "pw-calendar-card" });
+    }
+    if (!items.length) {
+      items.push({ verb: "Nothing to do", text: "all " + (state.tickers.length || 7) + " holdings are inside their normal range" + (future.length ? " · next: " + future[0].ticker + " earnings " + future[0].event_date : ""), target: null });
+    }
+    document.getElementById("pw-board-items").innerHTML = items.map(function (it, i) {
+      return '<div class="pw-board-item" data-t="' + (it.target || "") + '"><span class="pw-bi-verb">' + esc(it.verb) + '</span><span class="pw-bi-text">' + esc(it.text) + '</span>' + (it.target ? '<span class="pw-bi-arrow">→</span>' : "") + "</div>";
+    }).join("");
+    document.querySelectorAll(".pw-board-item").forEach(function (el) {
+      el.addEventListener("click", function () { var t = el.getAttribute("data-t"); if (t) scrollToEl(t); });
+    });
+  }
+
+  function renderSignals() {
+    var el = document.getElementById("pw-signals");
+    var rows = state.signals.filter(function (s) {
+      if (state.filter === "ALL") return true;
+      if (state.filter === "P0") return s.bucket === "P0";
+      return s.ticker === state.filter;
+    });
+    if (!rows.length) {
+      el.innerHTML = '<div class="pw-empty">' + (state.filter === "ALL"
+        ? "No signals — all " + (state.tickers.length || 7) + " holdings are within their normal range."
+        : "No matching signals.") + "</div>";
+      return;
+    }
+    var primary = rows.filter(function (s) { return s.bucket !== "P2"; }).slice(0, 20);
+    var context = rows.filter(function (s) { return s.bucket === "P2"; }).slice(0, 30);
+    var html = primary.map(function (s) {
+      var bCls = s.bucket === "P0" ? "pw-b-p0" : "pw-b-p1";
+      var bucketName = s.bucket === "P0" ? "Critical" : "Notable";
+      return '<div class="pw-signal ' + bCls + '" id="signal-' + esc(s.id) + '">' +
+        '<div class="pw-signal-title">' + esc(s.title) + "</div>" +
+        (s.why ? '<div class="pw-signal-why">' + esc(s.why) + "</div>" : "") +
+        '<div class="pw-signal-meta">' + bucketName + " · " + esc(s.ticker) + " · " + esc(s.kind) + (s.score ? " · score " + s.score : "") + " · " + isoDay(s.date) + (s.source ? " · " + esc(s.source) : "") + "</div></div>";
+    }).join("");
+    if (!primary.length) html += '<div class="pw-empty">Nothing critical or notable right now.</div>';
+    if (context.length) {
+      html += '<div class="pw-ctx-toggle" id="pw-ctx-toggle">Context (' + context.length + ") " + (state.contextOpen ? "▾ hide" : "▸ show") + "</div>";
+      if (state.contextOpen) {
+        html += context.map(function (s) {
+          return '<div class="pw-ctx-row" id="signal-' + esc(s.id) + '">' + esc(s.ticker) + " · " + esc(s.title) + " · " + isoDay(s.date) +
+            '<div class="pw-ctx-detail">' + esc(s.why || s.kind) + (s.source ? " · " + esc(s.source) : "") + "</div></div>";
+        }).join("");
+      }
+    }
+    el.innerHTML = html;
+    var tg = document.getElementById("pw-ctx-toggle");
+    if (tg) tg.addEventListener("click", function () { state.contextOpen = !state.contextOpen; renderSignals(); });
+    el.querySelectorAll(".pw-ctx-row").forEach(function (r) {
+      r.addEventListener("click", function () { r.classList.toggle("pw-open"); });
+    });
+  }
+
+  function buildFilter() {
+    var el = document.getElementById("pw-filter");
+    var opts = [["ALL", "All"], ["P0", "Critical"]].concat(state.tickers.map(function (t) { return [t, t]; }));
+    el.innerHTML = opts.map(function (o) {
+      return '<span class="tag tag-md' + (state.filter === o[0] ? " pw-on" : "") + '" data-f="' + o[0] + '">' + o[1] + "</span>";
+    }).join("");
+    el.querySelectorAll(".tag").forEach(function (t) {
+      t.addEventListener("click", function () {
+        state.filter = t.getAttribute("data-f");
+        buildFilter(); renderSignals();
+      });
+    });
+  }
+
+  function initTableAlignment(table) {
+    if (!table) return;
+    table.querySelectorAll("tr").forEach(function (r) {
+      r.querySelectorAll("td,th").forEach(function (c) { c.style.flex = ""; c.style.minWidth = ""; c.style.width = ""; });
+    });
+  }
+
+  function deepLink() {
+    var params = new URLSearchParams(window.location.search);
+    var id = params.get("signal");
+    if (!id && window.location.hash.indexOf("#signal-") === 0) id = window.location.hash.slice(8);
+    if (id && !document.getElementById("signal-" + id)) {
+      var hit = state.signals.filter(function (s) { return s.id === id; })[0];
+      if (hit && hit.bucket === "P2" && !state.contextOpen) { state.contextOpen = true; renderSignals(); }
+    }
+    if (id && document.getElementById("signal-" + id)) { scrollToEl("signal-" + id); return; }
+    var today = isoDay(Date.now());
+    var recent = state.signals.filter(function (s) { return s.bucket === "P0" && isoDay(s.date) === today; })[0];
+    if (recent) scrollToEl("signal-" + recent.id);
+  }
+
+  Promise.all([
+    readAlfs(FEED_S + "/portfolio/overview/@last/1"),
+    readAlfs(FEED_S + "/portfolio/history/@last/60"),
+    readAlfs(FEED_S + "/holdings/state/@last/1"),
+    readAlfs(FEED_S + "/signals/events/@last/40"),
+    readAlfs(FEED_C + "/events/stream/@last/30").catch(function () { return []; }),
+    readAlfs(FEED_C + "/calendar/upcoming/@last/1").catch(function () { return []; }),
+    readAlfs(FEED_C + "/digest/daily/@last/1").catch(function () { return []; }),
+  ]).then(function (res) {
+    var overview = toArr(res[0]).slice(-1)[0] || null;
+    var history = toArr(res[1]);
+    var holdingsAll = toArr(res[2]);
+    var sigRows = toArr(res[3]);
+    var evtRows = toArr(res[4]);
+    var calAll = toArr(res[5]);
+    var brief = toArr(res[6]).slice(-1)[0] || null;
+
+    var hDate = maxDate(holdingsAll);
+    var holdings = holdingsAll.filter(function (r) { return r.date === hDate; });
+    var cDate = maxDate(calAll);
+    var calendar = calAll.filter(function (r) { return r.date === cDate; });
+    state.tickers = holdings.map(function (h) { return h.ticker; });
+
+    // Merge fast-lane signals + slow-lane events into one ranked list.
+    state.signals = sigRows.map(function (s) {
+      return { id: s.signal_id, ticker: s.ticker, kind: s.dimension, bucket: s.bucket, title: s.title, why: "", score: s.score, date: s.date, source: "" };
+    }).concat(evtRows.map(function (e) {
+      return { id: e.event_id, ticker: e.ticker, kind: e.kind, bucket: e.bucket, title: e.title, why: e.detail || "", score: 0, date: e.date, source: e.source || "" };
+    }));
+    state.signals.sort(function (a, b) {
+      if (BUCKET_RANK[b.bucket] !== BUCKET_RANK[a.bucket]) return BUCKET_RANK[b.bucket] - BUCKET_RANK[a.bucket];
+      if (b.date !== a.date) return b.date - a.date;
+      return b.score - a.score;
+    });
+
+    renderBoard(overview, calendar);
+    buildFilter();
+    renderSignals();
+
+    // KPIs
+    if (overview) {
+      var asOf = new Date(overview.as_of);
+      var isToday = isoDay(asOf.getTime()) === isoDay(Date.now());
+      document.getElementById("kpi-day-label").textContent = isToday ? "Portfolio · today" : "Portfolio · last session";
+      var kd = document.getElementById("kpi-day");
+      kd.textContent = pct(overview.day_return);
+      kd.className = "pw-kpi-value " + cls(overview.day_return);
+      document.getElementById("kpi-day-sub").textContent = overview.benchmark + " " + pct(overview.benchmark_return) + (overview.market_day === "yes" ? " · market-wide day" : "");
+      var km = document.getElementById("kpi-mover");
+      km.textContent = overview.biggest_mover + " " + pct(overview.biggest_move);
+      km.className = "pw-kpi-value " + cls(overview.biggest_move);
+      document.getElementById("kpi-mover-sub").textContent = "largest single move";
+      var kc = document.getElementById("kpi-contrib");
+      kc.textContent = overview.top_contributor + " " + (overview.top_contribution_bps >= 0 ? "+" : "−") + Math.abs(overview.top_contribution_bps / 100).toFixed(1) + "pt";
+      kc.className = "pw-kpi-value " + cls(overview.top_contribution_bps);
+      document.getElementById("kpi-contrib-sub").textContent = "weight × move, in portfolio points";
+      document.getElementById("chart-asof").textContent = "as of " + isoDay(asOf.getTime());
+    }
+    var futureCal = calendar.filter(function (c) { return c.event_date; }).sort(function (a, b) { return a.event_date < b.event_date ? -1 : 1; });
+    if (futureCal.length) {
+      document.getElementById("kpi-catalyst").textContent = futureCal[0].ticker + " " + futureCal[0].event;
+      var days = Math.round((Date.parse(futureCal[0].event_date) - Date.now()) / 86400000);
+      document.getElementById("kpi-catalyst-sub").textContent = futureCal[0].event_date + " · in " + days + "d · " + futureCal[0].note;
+    } else {
+      document.getElementById("kpi-catalyst").textContent = "None confirmed";
+    }
+
+    // Brief
+    if (brief) {
+      document.getElementById("pw-brief").textContent = brief.brief;
+      document.getElementById("brief-date").textContent = isoDay(brief.date);
+    } else {
+      document.getElementById("pw-brief").textContent = "First brief arrives after the next market close.";
+    }
+
+    // Chart
+    var el = document.getElementById("pw-chart");
+    requestAnimationFrame(function () {
+      var chart = echarts.init(el);
+      var p0marks = state.signals.filter(function (s) { return s.bucket === "P0"; }).map(function (s) {
+        var pt = history.filter(function (h) { return isoDay(h.date) === isoDay(s.date); })[0];
+        return pt ? { coord: [pt.date, Math.round((pt.nav - 1) * 1000) / 10], value: "P0" } : null;
+      }).filter(Boolean);
+      var AX = { axisLine: { show: false }, axisTick: { show: false }, axisLabel: { fontSize: 10, color: "rgba(0,0,0,0.7)", margin: 8 }, splitLine: { show: false } };
+      chart.setOption({
+        grid: { top: 24, right: 8, bottom: 4, left: 4, containLabel: true },
+        legend: { top: 0, left: 0, itemWidth: 10, itemHeight: 2, textStyle: { fontSize: 11, color: "rgba(0,0,0,0.7)" } },
+        tooltip: { trigger: "axis", valueFormatter: function (v) { return (v >= 0 ? "+" : "") + v + "%"; } },
+        xAxis: Object.assign({ type: "time", boundaryGap: false }, AX),
+        yAxis: Object.assign({ type: "value", scale: true, axisLabel: Object.assign({}, AX.axisLabel, { formatter: "{value}%" }) }, AX),
+        series: [
+          { name: "Watch (weighted)", type: "line", showSymbol: false, smooth: 0.1, lineStyle: { width: 1.5, color: "#4C6FFF" }, itemStyle: { color: "#4C6FFF" },
+            data: history.map(function (h) { return [h.date, Math.round((h.nav - 1) * 1000) / 10]; }),
+            markPoint: { symbol: "circle", symbolSize: 7, itemStyle: { color: "#D64545" }, label: { show: false }, data: p0marks } },
+          { name: "SPY", type: "line", showSymbol: false, smooth: 0.1, lineStyle: { width: 1, color: "rgba(0,0,0,0.35)" }, itemStyle: { color: "rgba(0,0,0,0.35)" },
+            data: history.map(function (h) { return [h.date, Math.round((h.bench_nav - 1) * 1000) / 10]; }) },
+        ],
+      });
+      window.addEventListener("resize", function () { requestAnimationFrame(function () { chart.resize(); }); });
+    });
+
+    // Holdings table
+    var ht = document.getElementById("pw-holdings");
+    ht.querySelector("thead").innerHTML = "<tr><th>Ticker</th><th class=\"num\">Weight</th><th class=\"num\">Last</th><th class=\"num\">1D</th><th class=\"num\">5D</th><th class=\"num\">1M</th><th class=\"num\">Vol vs avg</th><th class=\"num\">β</th><th class=\"num\">Off 52w high</th><th class=\"num\">Contribution</th></tr>";
+    holdings.sort(function (a, b) { return Math.abs(b.contribution_bps) - Math.abs(a.contribution_bps); });
+    ht.querySelector("tbody").innerHTML = holdings.map(function (h) {
+      return '<tr><td class="pw-tk">' + esc(h.ticker) + '</td><td class="num">' + (h.weight * 100).toFixed(0) + '%</td><td class="num">$' + h.last.toFixed(2) +
+        '</td><td class="num ' + cls(h.day_return) + '">' + pct(h.day_return) + " (" + h.z.toFixed(1) + "σ)" +
+        '</td><td class="num ' + cls(h.ret_5d) + '">' + pct(h.ret_5d) + '</td><td class="num ' + cls(h.ret_1m) + '">' + pct(h.ret_1m) +
+        '</td><td class="num">' + h.vol_ratio.toFixed(1) + '×</td><td class="num">' + (h.beta ? h.beta.toFixed(2) : "—") + '</td><td class="num">' + pct(h.off_52w_high) +
+        '</td><td class="num">' + (h.contribution_bps >= 0 ? "+" : "−") + Math.abs(h.contribution_bps / 100).toFixed(1) + "pt</td></tr>";
+    }).join("");
+    initTableAlignment(ht);
+
+    // Calendar table
+    var ct = document.getElementById("pw-calendar");
+    ct.querySelector("thead").innerHTML = "<tr><th>Date</th><th>Ticker</th><th>Event</th><th>Note</th></tr>";
+    calendar.sort(function (a, b) { if (!a.event_date) return 1; if (!b.event_date) return -1; return a.event_date < b.event_date ? -1 : 1; });
+    ct.querySelector("tbody").innerHTML = calendar.map(function (c) {
+      return '<tr><td>' + (c.event_date || "TBC") + '</td><td class="pw-tk">' + esc(c.ticker) + "</td><td>" + esc(c.event) + "</td><td>" + esc(c.note) + "</td></tr>";
+    }).join("");
+    initTableAlignment(ct);
+    document.querySelectorAll("#pw-tabs .tab-item").forEach(function (t) {
+      t.addEventListener("click", function () { switchTab(t.getAttribute("data-pane")); });
+    });
+
+    // Methodology footer with tripwires
+    var tw = holdings.map(function (h) {
+      var t = h.tripwire_pct;
+      return "<tr><td>" + esc(h.ticker) + "</td><td>" + (t > 0 && t <= 15 ? "±" + t + "%" : "— price alone won't interrupt (lands in the brief)") + "</td><td>" + (h.sigma20 * 100).toFixed(1) + "%</td><td>" + (h.beta ? h.beta.toFixed(2) : "—") + "</td></tr>";
+    }).join("");
+    document.getElementById("pw-method").innerHTML =
+      "A move earns attention only if it passes three questions: is it abnormal <i>for that stock</i> (z-score vs its own 20-day volatility), " +
+      "is it meaningful <i>for this portfolio</i> (weight × move), and is it <i>not explained by the market</i> (residual vs β×SPY — on a broad " +
+      "risk-off day you get one portfolio alert, not six stock pings). Slow bleeds are caught by a 5-session drift check. " +
+      "Score ≥ 55 (calibrated on this watch's trailing 60 sessions: 131 recorded signals, expected ~0.4 critical/week in the current calm regime) " +
+      "pushes immediately within a budget of 4/day; 35–54 waits for the Daily Brief; below 35 stays on this page. Quiet runs send nothing.<br/>" +
+      "<table><tr><th>Holding</th><th>Would ping today at</th><th>σ20</th><th>β</th></tr>" + tw + "</table>" +
+      "Weights are the user's stated sizes (NVDA 25 / MSFT 15 / AAPL 15 / TSLA 15 / MU 10 / JPM 10 / KO 10) — an example portfolio for this demo watch. " +
+      "Data: Arrays market data every 30 min during US market hours; earnings calendar, analyst price-target news (sparse coverage tolerated) and tracked-KOL echo daily. " +
+      "KOL quotes are attributed context, never causes; unexplained abnormal moves are labeled exactly that. The Daily Brief cites only computed values shown on this page. " +
+      'Built with the <a href="https://github.com/zeyu-evvy-wang/alva-portfolio-watch-skill" target="_blank" rel="noopener noreferrer">portfolio-watch skill</a> — load it, name your tickers, get your own watch.';
+
+    deepLink();
+  }).catch(function (err) {
+    document.getElementById("pw-board-head").textContent = "Data load failed";
+    document.getElementById("pw-brief").textContent = "Data load failed: " + err.message;
+  });
+})();
+</script>
+</body>
+</html>
